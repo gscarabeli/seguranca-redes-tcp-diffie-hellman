@@ -50,27 +50,27 @@ serverPort = 1300
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName, serverPort))
 
-# 1️⃣ Gera segredo privado aleatório
+# Gera segredo privado aleatório
 private_b = random.randint(2, P-2)
 public_B = pow(G, private_b, P)
 
-# 2️⃣ Envia chave pública B
+# Envia chave pública B
 clientSocket.send(bytes(str(public_B), "utf-8"))
 
-# 3️⃣ Recebe chave pública A
+# Recebe chave pública A
 data_A = clientSocket.recv(1024)
 public_A = int(str(data_A, "utf-8"))
 
-# 4️⃣ Calcula chave compartilhada
+# Calcula chave compartilhada
 shared_key = pow(public_A, private_b, P)
 print("Chave Simétrica estabelecida:", shared_key)
 
-# 5️⃣ Envia mensagem criptografada
+# Envia mensagem criptografada
 sentence = input("Digite a frase: ")
 msg_to_send = encrypt(sentence, shared_key)
 clientSocket.send(bytes(msg_to_send, "utf-8"))
 
-# 6️⃣ Recebe resposta e decripta
+# Recebe resposta e decripta
 resp_bytes = clientSocket.recv(65000)
 resp_text = str(resp_bytes, "utf-8")
 

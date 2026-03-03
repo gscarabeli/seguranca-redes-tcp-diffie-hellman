@@ -55,29 +55,29 @@ while True:
     conn, addr = serverSocket.accept()
     print("Conectado por:", addr)
 
-    # 1️⃣ Gera segredo privado aleatório
+    # Gera segredo privado aleatório
     private_a = random.randint(2, P-2)
     public_A = pow(G, private_a, P)
 
-    # 2️⃣ Recebe chave pública do cliente
+    # Recebe chave pública do cliente
     data_B = conn.recv(1024)
     public_B = int(str(data_B, "utf-8"))
 
-    # 3️⃣ Envia chave pública do servidor
+    # Envia chave pública do servidor
     conn.send(bytes(str(public_A), "utf-8"))
 
-    # 4️⃣ Calcula chave compartilhada
+    # Calcula chave compartilhada
     shared_key = pow(public_B, private_a, P)
     print("Chave Simétrica estabelecida:", shared_key)
 
-    # 5️⃣ Recebe mensagem criptografada
+    # Recebe mensagem criptografada
     received_bytes = conn.recv(65000)
     msg_encrypted = str(received_bytes, "utf-8")
 
     msg_decrypted = decrypt(msg_encrypted, shared_key)
     print("Mensagem recebida (decifrada):", msg_decrypted)
 
-    # 6️⃣ Responde ao cliente
+    # Responde ao cliente
     resposta = encrypt(msg_decrypted.upper(), shared_key)
     conn.send(bytes(resposta, "utf-8"))
 
