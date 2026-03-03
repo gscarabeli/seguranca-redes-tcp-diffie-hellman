@@ -101,8 +101,7 @@ Durante a execução é possível observar:
 
 Link do vídeo demonstrando o funcionamento:
 
-(INSERIR LINK DO YOUTUBE AQUI)
-
+https://youtu.be/ljKbw0VP-0I
 ---
 
 ## 👨‍💻 Autor
