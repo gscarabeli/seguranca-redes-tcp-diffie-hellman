@@ -1,20 +1,23 @@
-# 🔐 TCP Secure Chat com Diffie-Hellman e Cifra de César
+# 🔐 TCP Secure Chat com RSA, Diffie-Hellman e Cifra de César
 
-Projeto desenvolvido para a disciplina de Segurança da Informação.
-
-## 📌 Objetivo
-
-Implementar uma comunicação cliente-servidor utilizando:
-
-- Socket TCP em Python
-- Cifra de César (implementação autoral)
-- Algoritmo de Diffie-Hellman para troca de chave simétrica
-- Teste de número primo para validação do parâmetro P
-- Análise de tráfego com Wireshark
+Projeto desenvolvido para a disciplina de **Segurança da Informação**.
 
 ---
 
-## 🏗️ Estrutura do Projeto
+# 📌 Objetivo
+
+Implementar uma comunicação **cliente-servidor segura** utilizando:
+
+* **Socket TCP em Python**
+* **RSA (implementação autoral)** para proteção da troca de chaves
+* **Diffie-Hellman** para geração de chave simétrica
+* **Cifra de César (implementação autoral)** para criptografia das mensagens
+* **primo_hyper** para geração eficiente de números primos de **4096 bits**
+* **Análise de tráfego com Wireshark**
+
+---
+
+# 🏗️ Estrutura do Projeto
 
 ```
 .
@@ -25,53 +28,111 @@ Implementar uma comunicação cliente-servidor utilizando:
 
 ---
 
-## 🔄 Funcionamento
+# 🔄 Funcionamento do Sistema
 
-### 1️⃣ Troca de Chaves (Diffie-Hellman)
+A comunicação segura ocorre em **três etapas principais**.
 
-- Cliente e servidor geram chaves privadas aleatórias
-- Trocam chaves públicas
-- Calculam independentemente a mesma chave simétrica
+---
 
-### 2️⃣ Criptografia
+# 1️⃣ Proteção da troca de chaves com RSA
 
-A chave compartilhada é utilizada como deslocamento (shift) na Cifra de César.
+Cada lado gera um par de chaves RSA:
+
+* **Chave pública**
+* **Chave privada**
+
+As chaves públicas do **Diffie-Hellman** são **criptografadas usando RSA** antes de serem enviadas pela rede.
+
+Isso impede que um atacante obtenha as chaves públicas diretamente ao analisar o tráfego.
 
 Fluxo:
 
-1. Cliente cifra a mensagem
-2. Servidor decifra
-3. Servidor responde cifrando novamente
-4. Cliente decifra a resposta
+```
+Cliente gera B (Diffie-Hellman)
+↓
+Cliente cifra B com RSA
+↓
+Servidor recebe B criptografado
+↓
+Servidor decifra usando RSA
+```
 
 ---
 
-## 🔢 Validação de Número Primo
+# 2️⃣ Troca de Chaves (Diffie-Hellman)
 
-Foi implementada função para teste de primalidade:
+Após a proteção com RSA, ocorre o **processo Diffie-Hellman**.
 
-- Garante que o número P utilizado no Diffie-Hellman é primo
-- Condição necessária para funcionamento correto do algoritmo
+Cliente e servidor:
 
----
+1. Geram um segredo privado
+2. Calculam suas chaves públicas
+3. Trocam as chaves públicas protegidas por RSA
+4. Calculam a **mesma chave simétrica compartilhada**
 
-## 🛠️ Tecnologias Utilizadas
-
-- Python 3
-- Socket TCP
-- Wireshark
+Essa chave é utilizada para cifrar as mensagens.
 
 ---
 
-## ▶️ Como Executar
+# 3️⃣ Criptografia das Mensagens (Cifra de César)
 
-### 1. No servidor:
+A **chave simétrica gerada pelo Diffie-Hellman** é utilizada como deslocamento na **Cifra de César**.
+
+Fluxo da comunicação:
+
+```
+Cliente cifra mensagem
+↓
+Mensagem enviada ao servidor
+↓
+Servidor decifra mensagem
+↓
+Servidor responde cifrando novamente
+↓
+Cliente decifra a resposta
+```
+
+---
+
+# 🔢 Geração de Números Primos (4096 bits)
+
+Para atender aos requisitos de segurança do projeto, o algoritmo **RSA utiliza números primos de 4096 bits**.
+
+A geração desses primos é realizada utilizando o módulo:
+
+```
+primo_hyper.py
+```
+
+Esse módulo fornece um gerador eficiente de números primos grandes, permitindo a criação das chaves RSA.
+
+---
+
+# 🛠️ Tecnologias Utilizadas
+
+* **Python 3**
+* **Socket TCP**
+* **RSA (implementação autoral)**
+* **Diffie-Hellman**
+* **Cifra de César**
+* **primo_hyper (geração de primos 4096 bits)**
+* **Wireshark**
+
+---
+
+# ▶️ Como Executar
+
+## 1️⃣ Executar o servidor
 
 ```bash
 python SimpleTCPServer.py
 ```
 
-### 2. No cliente:
+O servidor ficará aguardando conexões.
+
+---
+
+## 2️⃣ Configurar o cliente
 
 Editar o IP do servidor no arquivo:
 
@@ -79,7 +140,9 @@ Editar o IP do servidor no arquivo:
 serverName = "IP_DO_SERVIDOR"
 ```
 
-Executar:
+---
+
+## 3️⃣ Executar o cliente
 
 ```bash
 python SimpleTCPClient.py
@@ -87,19 +150,41 @@ python SimpleTCPClient.py
 
 ---
 
-## 📊 Teste no Wireshark
+# 📊 Teste com Wireshark
 
-Durante a execução é possível observar:
+Durante a execução é possível observar no Wireshark:
 
-- Handshake TCP (SYN, SYN-ACK, ACK)
-- Troca de chaves públicas
-- Mensagens cifradas trafegando na rede
+* **Handshake TCP**
+
+  * SYN
+  * SYN-ACK
+  * ACK
+
+* **Troca de chaves Diffie-Hellman protegidas com RSA**
+
+* **Mensagens cifradas utilizando Cifra de César**
+
+Filtro recomendado:
+
+```
+tcp.port == 1300
+```
 
 ---
 
-## 👨‍💻 Autor
+# 🔒 Camadas de Segurança Implementadas
 
-Gustavo Correia Scarabeli  
-Matheus Andrade de Oliveira
-Artur Rossi Júnior
-Gustavo Correa Pedro de Carvalho
+| Camada | Algoritmo      | Função                      |
+| ------ | -------------- | --------------------------- |
+| 1      | RSA            | Proteção da troca de chaves |
+| 2      | Diffie-Hellman | Geração de chave simétrica  |
+| 3      | Cifra de César | Criptografia das mensagens  |
+
+---
+
+# 👨‍💻 Autores
+
+**Gustavo Correia Scarabeli**
+**Matheus Andrade de Oliveira**
+**Artur Rossi Júnior**
+**Gustavo Correa Pedro de Carvalho**
