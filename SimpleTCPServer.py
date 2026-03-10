@@ -2,83 +2,122 @@ from socket import *
 import random
 
 # ==============================
-# Função para testar número primo
+# RSA
 # ==============================
-def is_prime(n):
-    if n <= 1:
-        return False
-    i = 2
-    while i * i <= n:
-        if n % i == 0:
-            return False
-        i += 1
-    return True
 
-# ==============================
-# Parâmetros Diffie-Hellman
-# ==============================
-P = 23
-G = 5
+def mod_inverse(e, phi):
 
-if not is_prime(P):
-    print("P não é primo! Encerrando...")
-    exit()
+    t, newt = 0, 1
+    r, newr = phi, e
+
+    while newr != 0:
+        q = r // newr
+        t, newt = newt, t - q * newt
+        r, newr = newr, r - q * newr
+
+    if t < 0:
+        t = t + phi
+
+    return t
+
+
+def generate_rsa_keys():
+
+    p = 817678374017744043324521958379332928672987827500414568723047977560277346802842861146310232875955632476500014482371931541510010827537175687967392210786236345092703934930340359730886116369026299514514524157283654749245301328808707637180755531770003815362893739114021950808962896283372072355099182027285950901645697478450564571786295649801993985154543546751712645713865416338307156046404659802090910401031389604388545781460211169348522037950717709049515451092665277966157076409189988213335648895233411532043452913880856984942246149323617882509499925289348772768274869258815067459127472478746326135351778318753148433189433890545773145978689067424373883277433185816247643698615307542032102592167495632583154477227505120616644582066256558530037263756370462326435119492095899727214135519673848413353217519703351286493916952384929341311321880087901466840945096822272464974373613953282791572806763626084081732973702844558979842094674903499661407411630598458559574698271506760721948045608258531646063727290582110669602317177990626514150976392019240237235139341006920893767868976493183645537501547021033804266795064655251101017760150716771455079021648138136416598517464263549789565854211554248587339345603253117832182155053918075518280092873039
+    q = 847264865870498560373199096855987374394579843690365212859248933760367824951195885107826134402079798731945252966992103758892900140474740839103410968318119467937600913627953917486781610676120884555595974851467729514808366152916197666706615984757027141596601343452529796631308843205956226597529414394028536061044573924637093271137843886943601202081072356974037184944760702868623104745408526935086260097039225840765742424876351877328319780338906042020337108154045533144000184525978093622337251170529502493618920794308828930474514144263004802346283870610024881840677624181095974942965417649100244450815315153466901114978539010917126544955512278235644421752919230130738798375242080763347277117164306795767469117079311806486081214405934413210866616965931996245638711093221275128659596533484043455837254134744387366247197135185236406032204858525109198879200761537325789634377460222394304405322254101456986745328476789511073060510549343843959570056619863390308857961931288676891962748744783590892792263668621428611237797914155275417675255065476796522733412522843193252701056782467683928827154334700450041965384885681987240154158040374381765708394106413788211841524886880628788301558834822175945224496509852570826741431083004306944261251040273
+
+    n = p * q
+    phi = (p - 1) * (q - 1)
+
+    e = 65537
+    d = mod_inverse(e, phi)
+
+    return (e, n), (d, n)
+
+
+def rsa_encrypt(m, pub):
+    e, n = pub
+    return pow(m, e, n)
+
+
+def rsa_decrypt(c, priv):
+    d, n = priv
+    return pow(c, d, n)
+
 
 # ==============================
 # Cifra de César
 # ==============================
+
 def encrypt(text, shift):
+
+    alphabet = "abcdefghijklmnopqrstuvwxyzç"
+    ALPHABET = alphabet.upper()
+
     result = ""
-    for char in text:
-        if char.isupper():
-            result += chr((ord(char) - 65 + shift) % 26 + 65)
-        elif char.islower():
-            result += chr((ord(char) - 97 + shift) % 26 + 97)
+
+    for c in text:
+
+        if c in alphabet:
+            idx = alphabet.index(c)
+            result += alphabet[(idx + shift) % len(alphabet)]
+
+        elif c in ALPHABET:
+            idx = ALPHABET.index(c)
+            result += ALPHABET[(idx + shift) % len(ALPHABET)]
+
         else:
-            result += char
+            result += c
+
     return result
+
 
 def decrypt(text, shift):
     return encrypt(text, -shift)
 
+
 # ==============================
-# Configuração do Servidor
+# Diffie-Hellman
 # ==============================
+
+P = 23
+G = 5
+
+public_key, private_key = generate_rsa_keys()
+
 serverPort = 1300
 serverSocket = socket(AF_INET, SOCK_STREAM)
+
 serverSocket.bind(("", serverPort))
 serverSocket.listen(1)
 
-print("Servidor TCP aguardando conexão...")
+print("Servidor aguardando conexão...")
 
 while True:
+
     conn, addr = serverSocket.accept()
     print("Conectado por:", addr)
 
-    # Gera segredo privado aleatório
     private_a = random.randint(2, P-2)
     public_A = pow(G, private_a, P)
 
-    # Recebe chave pública do cliente
-    data_B = conn.recv(1024)
-    public_B = int(str(data_B, "utf-8"))
+    data_B = conn.recv(8192)
+    encrypted_B = int(data_B.decode())
 
-    # Envia chave pública do servidor
-    conn.send(bytes(str(public_A), "utf-8"))
+    public_B = rsa_decrypt(encrypted_B, private_key)
 
-    # Calcula chave compartilhada
+    encrypted_A = rsa_encrypt(public_A, public_key)
+    conn.send(str(encrypted_A).encode())
+
     shared_key = pow(public_B, private_a, P)
-    print("Chave Simétrica estabelecida:", shared_key)
+    print("Chave simétrica:", shared_key)
 
-    # Recebe mensagem criptografada
-    received_bytes = conn.recv(65000)
-    msg_encrypted = str(received_bytes, "utf-8")
+    data = conn.recv(65000)
+    msg = decrypt(data.decode(), shared_key)
 
-    msg_decrypted = decrypt(msg_encrypted, shared_key)
-    print("Mensagem recebida (decifrada):", msg_decrypted)
+    print("Mensagem recebida:", msg)
 
-    # Responde ao cliente
-    resposta = encrypt(msg_decrypted.upper(), shared_key)
-    conn.send(bytes(resposta, "utf-8"))
+    resposta = encrypt(msg.upper(), shared_key)
+    conn.send(resposta.encode())
 
     conn.close()
