@@ -30,7 +30,7 @@ def generate_rsa_keys():
     n = p * q
     phi = (p - 1) * (q - 1)
 
-    e = 65537
+    e = 17
     d = mod_inverse(e, phi)
 
     return (e, n), (d, n)
@@ -47,7 +47,7 @@ def rsa_decrypt(c, priv):
 
 
 # ==============================
-# César
+# Cifra de César
 # ==============================
 
 def encrypt(text, shift):
@@ -86,7 +86,7 @@ G = 5
 
 public_key, private_key = generate_rsa_keys()
 
-serverName = "10.1.70.22"
+serverName = "127.0.0.1"
 serverPort = 1300
 
 clientSocket = socket(AF_INET, SOCK_STREAM)
@@ -96,22 +96,24 @@ private_b = random.randint(2, P-2)
 public_B = pow(G, private_b, P)
 
 encrypted_B = rsa_encrypt(public_B, public_key)
-clientSocket.send(str(encrypted_B).encode())
+clientSocket.send(str(encrypted_B).encode("utf-8"))
 
 data_A = clientSocket.recv(8192)
-encrypted_A = int(data_A.decode())
+encrypted_A = int(data_A.decode("utf-8"))
 
 public_A = rsa_decrypt(encrypted_A, private_key)
 
 shared_key = pow(public_A, private_b, P)
+
 print("Chave simétrica:", shared_key)
 
 sentence = input("Digite a frase: ")
+
 msg = encrypt(sentence, shared_key)
 
-clientSocket.send(msg.encode())
+clientSocket.send(msg.encode("utf-8"))
 
-resp = clientSocket.recv(65000).decode()
+resp = clientSocket.recv(65000).decode("utf-8")
 
 print("Resposta do servidor:", decrypt(resp, shared_key))
 

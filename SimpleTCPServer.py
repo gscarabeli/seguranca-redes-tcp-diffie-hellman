@@ -29,7 +29,7 @@ def generate_rsa_keys():
     n = p * q
     phi = (p - 1) * (q - 1)
 
-    e = 65537
+    e = 17
     d = mod_inverse(e, phi)
 
     return (e, n), (d, n)
@@ -46,7 +46,7 @@ def rsa_decrypt(c, priv):
 
 
 # ==============================
-# Cifra de César
+# Cifra de César (com ç)
 # ==============================
 
 def encrypt(text, shift):
@@ -102,22 +102,22 @@ while True:
     public_A = pow(G, private_a, P)
 
     data_B = conn.recv(8192)
-    encrypted_B = int(data_B.decode())
+    encrypted_B = int(data_B.decode("utf-8"))
 
     public_B = rsa_decrypt(encrypted_B, private_key)
 
     encrypted_A = rsa_encrypt(public_A, public_key)
-    conn.send(str(encrypted_A).encode())
+    conn.send(str(encrypted_A).encode("utf-8"))
 
     shared_key = pow(public_B, private_a, P)
     print("Chave simétrica:", shared_key)
 
     data = conn.recv(65000)
-    msg = decrypt(data.decode(), shared_key)
+    msg = decrypt(data.decode("utf-8"), shared_key)
 
     print("Mensagem recebida:", msg)
 
     resposta = encrypt(msg.upper(), shared_key)
-    conn.send(resposta.encode())
+    conn.send(resposta.encode("utf-8"))
 
     conn.close()
