@@ -86,7 +86,7 @@ G = 5
 
 public_key, private_key = generate_rsa_keys()
 
-serverName = "127.0.0.1"
+serverName = "10.1.70.22"
 serverPort = 1300
 
 clientSocket = socket(AF_INET, SOCK_STREAM)
